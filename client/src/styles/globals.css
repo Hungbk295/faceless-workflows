@@ -1,0 +1,25 @@
+/* App shell — port from v3 line 56 (.app grid) */
+.app-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Section label — used in sidebar + a few panels */
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 600;
+  margin-bottom: 12px;
+  margin-top: 24px;
+}
+
+body.dark .section-label { color: var(--dark-ink-soft); }

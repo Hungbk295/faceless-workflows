@@ -1,0 +1,32 @@
+.container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 14px 22px;
+  border-radius: 6px;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.25s ease-out;
+  max-width: 360px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.success { background: var(--olive); }
+.error { background: var(--crimson); }
+.warning { background: var(--gold); }
+
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

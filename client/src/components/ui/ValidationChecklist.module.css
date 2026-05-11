@@ -1,0 +1,35 @@
+.list {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: var(--paper);
+  border-left: 2px solid var(--line);
+}
+
+:global(body.dark) .item { background: var(--dark-paper); }
+
+.item.ok { border-left-color: var(--olive); color: var(--ink); }
+.item.bad { border-left-color: var(--crimson); }
+
+:global(body.dark) .item.ok { color: var(--dark-ink); }
+
+.mark {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.ok .mark { color: var(--olive); }
+.bad .mark { color: var(--crimson); }

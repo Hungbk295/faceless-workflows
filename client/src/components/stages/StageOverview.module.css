@@ -1,0 +1,100 @@
+.workflow {
+  display: flex;
+  gap: 8px;
+  margin: 24px 0;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+
+.step {
+  flex-shrink: 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 12px 14px;
+  min-width: 140px;
+  position: relative;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+:global(body.dark) .step {
+  background: var(--dark-paper);
+  border-color: var(--dark-line);
+}
+
+.step.done {
+  background: var(--olive);
+  color: var(--paper);
+  border-color: var(--olive);
+}
+
+.step.current {
+  background: var(--rust);
+  color: var(--paper);
+  border-color: var(--rust);
+}
+
+.stepNum {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.stepName {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+  color: var(--line);
+  font-size: 18px;
+}
+
+.steps {
+  display: grid;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.stepCard {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 20px;
+  padding: 18px;
+  background: var(--paper);
+  border-left: 3px solid var(--rust);
+  border-radius: 0 4px 4px 0;
+}
+
+:global(body.dark) .stepCard { background: var(--dark-paper); }
+
+.stepCardNum {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--rust);
+  font-style: italic;
+}
+
+.stepCardContent h4 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+
+.stepCardContent p {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+:global(body.dark) .stepCardContent p { color: var(--dark-ink-soft); }
+
+.refLink { color: var(--rust); }

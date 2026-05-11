@@ -1,0 +1,19 @@
+.main {
+  padding: 48px 60px 80px;
+  max-width: 1200px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .main { padding: 24px; }
+}
+
+.placeholder {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  padding: 14px 18px;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  margin-top: 20px;
+}

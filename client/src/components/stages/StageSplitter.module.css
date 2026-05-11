@@ -1,0 +1,102 @@
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  margin: 16px 0;
+}
+
+:global(body.dark) .tableWrap { border-color: var(--dark-line); }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 12px;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+}
+
+:global(body.dark) .table td { border-bottom-color: var(--dark-line); }
+
+.num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--rust);
+}
+
+.level {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: rgba(184, 134, 11, 0.15);
+  color: var(--gold);
+  padding: 2px 8px;
+  border-radius: 3px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.voCell {
+  max-width: 460px;
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+.cellInput {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 4px 6px;
+  font: inherit;
+  color: inherit;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.cellInput:focus {
+  outline: none;
+  border-color: var(--rust);
+  background: var(--paper);
+}
+
+:global(body.dark) .cellInput:focus { background: var(--dark-paper); }
+
+.meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.summary {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 12px 0;
+}
+
+.summary strong { color: var(--ink); }
+
+:global(body.dark) .summary strong { color: var(--dark-ink); }

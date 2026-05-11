@@ -1,0 +1,27 @@
+:root {
+  /* Color palette — editorial workbench (warm beige + deep ink) */
+  --paper: #f5f0e6;
+  --paper-2: #ebe3d3;
+  --ink: #1a1612;
+  --ink-soft: #3d342a;
+  --rust: #c2410c;
+  --rust-light: #ea580c;
+  --olive: #4d5c30;
+  --gold: #b8860b;
+  --crimson: #991b1b;
+  --line: #d4c9b3;
+  --line-soft: #e0d6c0;
+  --selection: rgba(194, 65, 12, 0.15);
+
+  /* Dark mode (workbench at night) */
+  --dark-paper: #14110d;
+  --dark-paper-2: #1f1a14;
+  --dark-ink: #f5f0e6;
+  --dark-ink-soft: #c4b8a3;
+  --dark-line: #2d2620;
+
+  /* Typography */
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}

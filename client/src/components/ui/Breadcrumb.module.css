@@ -1,0 +1,8 @@
+.crumb {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 12px;
+}

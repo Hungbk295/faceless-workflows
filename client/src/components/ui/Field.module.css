@@ -1,0 +1,57 @@
+.group { margin-bottom: 18px; }
+
+.label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+
+:global(body.dark) .label { color: var(--dark-ink-soft); }
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 11px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  border-radius: 4px;
+  transition: border-color 0.15s;
+}
+
+:global(body.dark) .input,
+:global(body.dark) .textarea,
+:global(body.dark) .select {
+  background: var(--dark-paper);
+  border-color: var(--dark-line);
+  color: var(--dark-ink);
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--rust);
+}
+
+.textarea {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  resize: vertical;
+  min-height: 200px;
+}
+
+.hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--ink-soft);
+}

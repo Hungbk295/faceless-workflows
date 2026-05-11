@@ -1,0 +1,26 @@
+.empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--ink-soft);
+}
+
+.icon {
+  font-family: var(--font-serif);
+  font-size: 80px;
+  font-weight: 900;
+  font-style: italic;
+  color: var(--line);
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+:global(body.dark) .title { color: var(--dark-ink); }
+
+.body { margin-bottom: 20px; }

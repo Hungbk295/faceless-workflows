@@ -1,0 +1,211 @@
+.sidebar {
+  background: var(--paper-2);
+  border-right: 1px solid var(--line);
+  padding: 28px 22px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+:global(body.dark) .sidebar {
+  background: var(--dark-paper-2);
+  border-right-color: var(--dark-line);
+}
+
+.brand {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+:global(body.dark) .brand { border-bottom-color: var(--dark-line); }
+
+.logo {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+:global(body.dark) .logo { color: var(--dark-ink); }
+
+.logo .accent {
+  color: var(--rust);
+  font-style: italic;
+}
+
+.tag {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+:global(body.dark) .tag { color: var(--dark-ink-soft); }
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item {
+  padding: 10px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink-soft);
+  transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+}
+
+.item:hover { background: var(--paper); color: var(--ink); }
+.item.active { background: var(--ink); color: var(--paper); font-weight: 500; }
+:global(body.dark) .item.active { background: var(--rust); }
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rust);
+  flex-shrink: 0;
+}
+
+.itemLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  font-size: 11px;
+  color: var(--ink-soft);
+  padding: 8px;
+}
+
+.newBtn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  letter-spacing: 0.05em;
+  transition: border-color 0.2s, color 0.2s;
+  margin-top: 8px;
+}
+
+.newBtn:hover { border-color: var(--rust); color: var(--rust); }
+:global(body.dark) .newBtn { border-color: var(--dark-line); }
+
+.stageNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stage {
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+.stage:hover { background: var(--paper); color: var(--ink); }
+.stage.active { background: var(--paper); color: var(--ink); font-weight: 500; }
+
+.stage.active::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--rust);
+}
+
+.stageNum {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rust);
+  width: 22px;
+  text-align: center;
+}
+
+.stageStatus {
+  margin-left: auto;
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.stageStatus.done { opacity: 1; color: var(--olive); }
+
+.footer {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+:global(body.dark) .footer { border-top-color: var(--dark-line); }
+
+.footerBtn {
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  text-align: left;
+}
+
+.footerBtn:hover {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+:global(body.dark) .footerBtn { border-color: var(--dark-line); }
+:global(body.dark) .footerBtn:hover {
+  background: var(--rust);
+  border-color: var(--rust);
+}
+
+.footerNote {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  opacity: 0.6;
+  line-height: 1.4;
+}

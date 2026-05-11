@@ -1,0 +1,37 @@
+.zone {
+  border: 2px dashed var(--line);
+  padding: 40px;
+  text-align: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--paper);
+}
+
+:global(body.dark) .zone {
+  background: var(--dark-paper);
+  border-color: var(--dark-line);
+}
+
+.zone:hover, .dragover {
+  border-color: var(--rust);
+  background: var(--selection);
+}
+
+.uploaded {
+  border: 2px solid var(--olive);
+  background: rgba(77, 92, 48, 0.08);
+}
+
+.uploaded:hover { background: rgba(77, 92, 48, 0.14); }
+
+.text {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
