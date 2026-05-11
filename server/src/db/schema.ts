@@ -125,3 +125,39 @@ export const formDrafts = sqliteTable('form_drafts', {
   formKey: text('form_key').notNull(),
   data: text('data').notNull(),
 }, (t) => ({ pk: primaryKey({ columns: [t.channelId, t.formKey] }) }));
+
+export const spyRuns = sqliteTable('spy_runs', {
+  channelId: text('channel_id').primaryKey().references(() => channels.id, { onDelete: 'cascade' }),
+  sourceUrl: text('source_url').notNull().default(''),
+  channelTitle: text('channel_title').notNull().default(''),
+  status: text('status').notNull().default('idle'),
+  step: text('step'),
+  progress: integer('progress').notNull().default(0),
+  total: integer('total').notNull().default(0),
+  error: text('error'),
+  startedAt: text('started_at'),
+  completedAt: text('completed_at'),
+});
+
+export const spyVideos = sqliteTable('spy_videos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  channelId: text('channel_id').notNull().references(() => channels.id, { onDelete: 'cascade' }),
+  videoId: text('video_id').notNull(),
+  rank: integer('rank').notNull(),
+  title: text('title').notNull().default(''),
+  viewCount: integer('view_count').notNull().default(0),
+  durationSec: integer('duration_sec').notNull().default(0),
+  publishedAt: text('published_at'),
+  thumbnailPath: text('thumbnail_path'),
+  transcript: text('transcript').notNull().default(''),
+  transcriptStatus: text('transcript_status').notNull().default('pending'),
+  framesStatus: text('frames_status').notNull().default('skipped'),
+}, (t) => ({ uq: uniqueIndex('spy_channel_video').on(t.channelId, t.videoId) }));
+
+export const spyFrames = sqliteTable('spy_frames', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  videoRowId: integer('video_row_id').notNull().references(() => spyVideos.id, { onDelete: 'cascade' }),
+  idx: integer('idx').notNull(),
+  timestampSec: integer('timestamp_sec').notNull(),
+  framePath: text('frame_path').notNull(),
+}, (t) => ({ uq: uniqueIndex('spy_frame_video_idx').on(t.videoRowId, t.idx) }));

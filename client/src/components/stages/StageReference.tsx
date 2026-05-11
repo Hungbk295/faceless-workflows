@@ -12,6 +12,7 @@ import { useUiStore } from '../../store/ui.ts';
 import { toast } from '../../store/toast.ts';
 import { referencePrompt } from '../../lib/prompts/reference.ts';
 import { useClaudeBridge } from '../../hooks/useClaudeBridge.ts';
+import { SpyChannelPanel } from '../spy/SpyChannelPanel.tsx';
 
 interface Props {
   channel: ChannelDto;
@@ -82,6 +83,8 @@ export function StageReference({ channel }: Props) {
           </Button>
         </div>
       </Card>
+
+      <SpyChannelPanel channel={channel} />
 
       <Card
         label="Step 02"
