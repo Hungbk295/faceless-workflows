@@ -11,7 +11,7 @@ export interface RunClaudeOpts {
 
 const CLAUDE_BIN = process.env.CLAUDE_BIN || 'claude';
 const PERMISSION_MODE = process.env.BRIDGE_PERMISSION_MODE || 'bypassPermissions';
-const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'sonnet';
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'opus';
 
 interface ClaudeJsonResponse {
   result?: string;
