@@ -13,3 +13,4 @@ export * from './schemas/formDrafts.ts';
 export * from './schemas/voiceClips.ts';
 export * from './schemas/claude.ts';
 export * from './schemas/spy.ts';
+export * from './schemas/attachments.ts';

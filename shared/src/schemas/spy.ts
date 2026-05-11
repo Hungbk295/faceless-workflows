@@ -28,6 +28,7 @@ export const spyFrameDtoSchema = z.object({
   idx: z.number().int(),
   timestampSec: z.number().int(),
   url: z.string(),
+  path: z.string(),
 });
 export type SpyFrameDto = z.infer<typeof spyFrameDtoSchema>;
 
@@ -39,6 +40,7 @@ export const spyVideoDtoSchema = z.object({
   durationSec: z.number().int(),
   publishedAt: z.string().nullable(),
   thumbnailUrl: z.string().nullable(),
+  thumbnailPath: z.string().nullable(),
   transcript: z.string(),
   transcriptStatus: spyTranscriptStatusSchema,
   framesStatus: spyFramesStatusSchema,

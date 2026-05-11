@@ -68,6 +68,7 @@ function loadResult(channelId: string): SpyResultDto {
       idx: f.idx,
       timestampSec: f.timestampSec,
       url: `/api/channels/${channelId}/spy/files/frame/${encodeURIComponent(v.videoId)}/${f.idx}`,
+      path: f.framePath,
     });
     framesByVideo.set(f.videoRowId, arr);
   }
@@ -81,6 +82,7 @@ function loadResult(channelId: string): SpyResultDto {
     thumbnailUrl: v.thumbnailPath
       ? `/api/channels/${channelId}/spy/files/thumb/${encodeURIComponent(v.videoId)}`
       : null,
+    thumbnailPath: v.thumbnailPath,
     transcript: v.transcript,
     transcriptStatus: v.transcriptStatus as SpyTranscriptStatus,
     framesStatus: v.framesStatus as SpyFramesStatus,

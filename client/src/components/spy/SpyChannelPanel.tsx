@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ChannelDto, SpyVideoDto } from 'shared';
+import type { ChannelDto, SpyFrameDto, SpyVideoDto } from 'shared';
 import { Card } from '../ui/Card.tsx';
 import { Input } from '../ui/Input.tsx';
 import { Button } from '../ui/Button.tsx';
@@ -10,10 +10,49 @@ import {
   useSpyEvents,
   useSpyResult,
 } from '../../hooks/useSpy.ts';
+import type { AttachmentItem } from '../../hooks/useAttachments.ts';
 import { toast } from '../../store/toast.ts';
 import styles from './SpyChannelPanel.module.css';
 
-interface Props { channel: ChannelDto; }
+interface Props {
+  channel: ChannelDto;
+  isAttached: (id: string) => boolean;
+  onToggleAttachment: (item: AttachmentItem) => void;
+}
+
+export function videoAttachmentId(videoId: string): string {
+  return `video:${videoId}`;
+}
+export function frameAttachmentId(videoId: string, idx: number): string {
+  return `frame:${videoId}:${idx}`;
+}
+
+function buildVideoAttachment(v: SpyVideoDto): AttachmentItem | null {
+  if (!v.thumbnailPath) return null;
+  return {
+    id: videoAttachmentId(v.videoId),
+    kind: 'video',
+    label: v.title,
+    previewUrl: v.thumbnailUrl ?? undefined,
+    serverPath: v.thumbnailPath,
+    transcript: v.transcript,
+    videoTitle: v.title,
+    videoId: v.videoId,
+    viewCount: v.viewCount,
+  };
+}
+
+function buildFrameAttachment(v: SpyVideoDto, f: SpyFrameDto): AttachmentItem {
+  return {
+    id: frameAttachmentId(v.videoId, f.idx),
+    kind: 'frame',
+    label: `${v.title} — frame ${f.idx} (${f.timestampSec}s)`,
+    previewUrl: f.url,
+    serverPath: f.path,
+    videoTitle: v.title,
+    videoId: v.videoId,
+  };
+}
 
 const STEP_LABELS: Record<string, string> = {
   list: 'Listing videos',
@@ -39,7 +78,7 @@ function fmtDuration(sec: number): string {
     : `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export function SpyChannelPanel({ channel }: Props) {
+export function SpyChannelPanel({ channel, isAttached, onToggleAttachment }: Props) {
   const [url, setUrl] = useState(channel.refUrl);
   const [lightbox, setLightbox] = useState<string | null>(null);
   useEffect(() => { setUrl(channel.refUrl); }, [channel.refUrl]);
@@ -102,7 +141,7 @@ export function SpyChannelPanel({ channel }: Props) {
             disabled={isRunning}
           />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', width: '100%', marginTop: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {isRunning ? (
             <Button variant="secondary" onClick={onCancel} disabled={cancelMut.isPending}>
               ⏹ Cancel
@@ -139,30 +178,60 @@ export function SpyChannelPanel({ channel }: Props) {
 
       {videos.length > 0 && (
         <>
-          <div className={styles.sectionLabel}>Top {videos.length} Videos</div>
+          <div className={styles.sectionLabel}>
+            Top {videos.length} Videos
+            <span className={styles.sectionHint}>Tick để đưa thumbnail + transcript vào prompt</span>
+          </div>
           <div className={styles.videoGrid}>
-            {videos.map((v) => <VideoCard key={v.videoId} v={v} onOpenImage={setLightbox} />)}
+            {videos.map((v) => {
+              const att = buildVideoAttachment(v);
+              const id = videoAttachmentId(v.videoId);
+              return (
+                <VideoCard
+                  key={v.videoId}
+                  v={v}
+                  onOpenImage={setLightbox}
+                  checked={isAttached(id)}
+                  onToggleVideo={att ? () => onToggleAttachment(att) : undefined}
+                />
+              );
+            })}
           </div>
         </>
       )}
 
       {framesVideos.length > 0 && (
         <>
-          <div className={styles.sectionLabel}>Random Frames — Top {framesVideos.length} Videos</div>
+          <div className={styles.sectionLabel}>
+            Random Frames — Top {framesVideos.length} Videos
+            <span className={styles.sectionHint}>Tick từng frame để gắn vào prompt</span>
+          </div>
           {framesVideos.map((v) => (
             <div key={v.videoId} className={styles.framesGroup}>
               <h4>#{v.rank} · {v.title}</h4>
               <div className={styles.framesRow}>
-                {v.frames.map((f) => (
-                  <img
-                    key={f.idx}
-                    className={styles.frame}
-                    src={f.url}
-                    alt={`frame at ${f.timestampSec}s`}
-                    onClick={() => setLightbox(f.url)}
-                    loading="lazy"
-                  />
-                ))}
+                {v.frames.map((f) => {
+                  const fid = frameAttachmentId(v.videoId, f.idx);
+                  const checked = isAttached(fid);
+                  return (
+                    <div key={f.idx} className={styles.frameWrap}>
+                      <label className={styles.frameCheckbox}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => onToggleAttachment(buildFrameAttachment(v, f))}
+                        />
+                      </label>
+                      <img
+                        className={`${styles.frame} ${checked ? styles.frameChecked : ''}`}
+                        src={f.url}
+                        alt={`frame at ${f.timestampSec}s`}
+                        onClick={() => setLightbox(f.url)}
+                        loading="lazy"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -178,23 +247,37 @@ export function SpyChannelPanel({ channel }: Props) {
   );
 }
 
-function VideoCard({ v, onOpenImage }: { v: SpyVideoDto; onOpenImage: (u: string) => void }) {
+interface VideoCardProps {
+  v: SpyVideoDto;
+  onOpenImage: (u: string) => void;
+  checked: boolean;
+  onToggleVideo?: () => void;
+}
+
+function VideoCard({ v, onOpenImage, checked, onToggleVideo }: VideoCardProps) {
   const statusBadge = v.transcriptStatus !== 'ok'
     ? <span className={`${styles.statusBadge} ${styles[v.transcriptStatus] ?? ''}`}>transcript: {v.transcriptStatus}</span>
     : null;
+  const disabled = !onToggleVideo;
   return (
-    <div className={styles.videoCard}>
-      {v.thumbnailUrl ? (
-        <img
-          className={styles.thumb}
-          src={v.thumbnailUrl}
-          alt={v.title}
-          onClick={() => v.thumbnailUrl && onOpenImage(v.thumbnailUrl)}
-          loading="lazy"
-        />
-      ) : (
-        <div className={styles.thumb} />
-      )}
+    <div className={`${styles.videoCard} ${checked ? styles.videoCardChecked : ''}`}>
+      <label className={styles.videoCheckbox} title={disabled ? 'Thumbnail chưa sẵn sàng' : 'Đưa video này vào prompt'}>
+        <input type="checkbox" checked={checked} onChange={() => onToggleVideo?.()} disabled={disabled} />
+        <span>Attach</span>
+      </label>
+      <div className={styles.thumbWrap}>
+        {v.thumbnailUrl ? (
+          <img
+            className={styles.thumb}
+            src={v.thumbnailUrl}
+            alt={v.title}
+            onClick={() => v.thumbnailUrl && onOpenImage(v.thumbnailUrl)}
+            loading="lazy"
+          />
+        ) : (
+          <div className={styles.thumb} />
+        )}
+      </div>
       <div className={styles.videoMeta}>
         <p className={styles.title}>#{v.rank} {v.title}</p>
         <div className={styles.stats}>

@@ -1,7 +1,7 @@
 .bar {
   display: flex;
   gap: 8px;
-  align-items: flex-end;
+  align-items: center;
   flex-wrap: wrap;
 }
 .bar .urlWrap { flex: 1; min-width: 280px; }
@@ -59,16 +59,74 @@
 
 .videoCard {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 16px;
+  grid-template-columns: 28px 220px 1fr;
+  gap: 12px;
   padding: 12px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 4px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.videoCard.videoCardChecked {
+  border-color: var(--rust);
+  background: rgba(194, 65, 12, 0.04);
 }
 :global(body.dark) .videoCard {
   background: var(--dark-paper);
   border-color: var(--dark-line);
+}
+:global(body.dark) .videoCard.videoCardChecked {
+  border-color: var(--rust);
+  background: rgba(234, 88, 12, 0.08);
+}
+
+.videoCheckbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  user-select: none;
+}
+.videoCheckbox input { cursor: pointer; transform: scale(1.15); accent-color: var(--rust); }
+.videoCheckbox input:disabled { cursor: not-allowed; }
+
+.thumbWrap { width: 220px; }
+
+.frameWrap {
+  position: relative;
+}
+.frameCheckbox {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(245, 240, 230, 0.9);
+  border-radius: 2px;
+  padding: 2px;
+  display: flex;
+  z-index: 1;
+  cursor: pointer;
+}
+.frameCheckbox input { cursor: pointer; accent-color: var(--rust); }
+:global(body.dark) .frameCheckbox { background: rgba(20, 17, 13, 0.85); }
+.frameChecked {
+  outline: 2px solid var(--rust);
+  outline-offset: -2px;
+}
+
+.sectionHint {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  margin-left: 10px;
+  font-weight: 400;
 }
 
 .thumb {

@@ -1,0 +1,144 @@
+.wrap {
+  border: 1px dashed var(--line);
+  background: var(--paper);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+:global(body.dark) .wrap {
+  background: var(--dark-paper);
+  border-color: var(--dark-line);
+}
+.wrap.drag {
+  border-style: solid;
+  border-color: var(--rust);
+  background: rgba(194, 65, 12, 0.04);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+.count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.chipList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  max-width: 320px;
+  font-size: 12px;
+}
+:global(body.dark) .chip {
+  background: var(--dark-paper-2);
+  border-color: var(--dark-line);
+}
+.chip .preview {
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  object-fit: cover;
+  background: var(--line-soft);
+  flex-shrink: 0;
+}
+.chip .iconBox {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--line-soft);
+  border-radius: 2px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.chip .info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.chip .kind {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--rust);
+  text-transform: uppercase;
+}
+.chip .name {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+.removeBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--ink-soft);
+  padding: 0 2px;
+  line-height: 1;
+}
+.removeBtn:hover { color: var(--crimson); }
+
+.empty {
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-style: italic;
+  padding: 14px 4px;
+  text-align: center;
+}
+
+.dropZone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--paper-2);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+:global(body.dark) .dropZone { background: var(--dark-paper-2); }
+.dropZone .pickBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.dropZone .pickBtn:hover { border-color: var(--rust); color: var(--rust); }
+:global(body.dark) .dropZone .pickBtn {
+  background: var(--dark-paper);
+  border-color: var(--dark-line);
+  color: var(--dark-ink);
+}
+.dropZone input[type="file"] { display: none; }

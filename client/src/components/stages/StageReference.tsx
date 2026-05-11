@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ChannelDto } from 'shared';
 import { PageHeader } from '../layout/PageHeader.tsx';
 import { Card } from '../ui/Card.tsx';
@@ -11,8 +11,11 @@ import { useUpdateChannel } from '../../hooks/useChannels.ts';
 import { useUiStore } from '../../store/ui.ts';
 import { toast } from '../../store/toast.ts';
 import { referencePrompt } from '../../lib/prompts/reference.ts';
+import { composeAttachmentsBlock } from '../../lib/prompts/attachments.ts';
 import { useClaudeBridge } from '../../hooks/useClaudeBridge.ts';
+import { useAttachments } from '../../hooks/useAttachments.ts';
 import { SpyChannelPanel } from '../spy/SpyChannelPanel.tsx';
+import { AttachmentsPanel } from '../spy/AttachmentsPanel.tsx';
 
 interface Props {
   channel: ChannelDto;
@@ -26,6 +29,12 @@ export function StageReference({ channel }: Props) {
   const [refNotes, setRefNotes] = useState(channel.refNotes);
 
   const bridge = useClaudeBridge({ persistKey: `${channel.id}:reference` });
+  const attachments = useAttachments(channel.id);
+
+  const finalPrompt = useMemo(
+    () => referencePrompt(channel) + composeAttachmentsBlock(attachments.items),
+    [channel, attachments.items],
+  );
 
   const dirtyInfo = refUrl !== channel.refUrl || refNotes !== channel.refNotes;
 
@@ -84,7 +93,11 @@ export function StageReference({ channel }: Props) {
         </div>
       </Card>
 
-      <SpyChannelPanel channel={channel} />
+      <SpyChannelPanel
+        channel={channel}
+        isAttached={attachments.isAttached}
+        onToggleAttachment={attachments.toggle}
+      />
 
       <Card
         label="Step 02"
@@ -98,9 +111,14 @@ export function StageReference({ channel }: Props) {
             claude.ai
           </a>.
         </p>
+        <AttachmentsPanel
+          items={attachments.items}
+          onRemove={attachments.removeFile}
+          onUploadFile={attachments.uploadFile}
+        />
         <ClaudeRunPanel
           bridge={bridge}
-          prompt={referencePrompt(channel)}
+          prompt={finalPrompt}
           promptLabel="Prompt — Reference Analysis"
         />
       </Card>

@@ -17,6 +17,7 @@ import { clipsRoute, voiceRoute } from './routes/clips.ts';
 import { claudeRoute } from './routes/claude.ts';
 import { importRoute, exportRoute } from './routes/importExport.ts';
 import { spyRoute } from './routes/spy.ts';
+import { attachmentsRoute } from './routes/attachments.ts';
 
 export const app = new Hono();
 
@@ -37,6 +38,7 @@ app.route('/api/channels/:channelId/voice-config', voiceConfigRoute);
 app.route('/api/channels/:channelId/visual-prompts', visualPromptsRoute);
 app.route('/api/channels/:channelId/reference', referenceRoute);
 app.route('/api/channels/:channelId/spy', spyRoute);
+app.route('/api/channels/:channelId/attachments', attachmentsRoute);
 app.route('/api/channels/:channelId/form-drafts', formDraftsRoute);
 app.route('/api/channels/:channelId/clips', clipsRoute);
 app.route('/api/channels/:channelId/voice', voiceRoute);
