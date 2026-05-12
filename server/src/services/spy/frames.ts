@@ -4,7 +4,7 @@ import { dirname } from 'node:path';
 const FFMPEG_BIN = process.env.FFMPEG_BIN || 'ffmpeg';
 
 export class FfmpegError extends Error {
-  constructor(message: string) {
+  constructor(message: string, public readonly stderr?: string) {
     super(message);
     this.name = 'FfmpegError';
   }
@@ -31,6 +31,14 @@ export function pickFrameTimestamps(durationSec: number, count: number, minGapRa
   return out;
 }
 
+// HTTP reconnect flags — survive transient YouTube CDN hiccups during seek.
+const FFMPEG_HTTP_FLAGS = [
+  '-rw_timeout', '30000000',           // 30s socket timeout
+  '-reconnect', '1',
+  '-reconnect_streamed', '1',
+  '-reconnect_delay_max', '5',
+];
+
 export async function extractFrame(
   streamUrl: string,
   timestampSec: number,
@@ -42,6 +50,7 @@ export async function extractFrame(
     [
       FFMPEG_BIN,
       '-loglevel', 'error',
+      ...FFMPEG_HTTP_FLAGS,
       '-ss', String(timestampSec),
       '-i', streamUrl,
       '-frames:v', '1',
@@ -60,26 +69,61 @@ export async function extractFrame(
     ]);
     if (signal?.aborted) throw new FfmpegError('aborted');
     if (exitCode !== 0) {
-      throw new FfmpegError(`ffmpeg exited ${exitCode}: ${stderr.slice(0, 200)}`);
+      throw new FfmpegError(`ffmpeg exited ${exitCode}`, stderr.trim());
     }
   } finally {
     signal?.removeEventListener('abort', onAbort);
   }
 }
 
+/**
+ * Extract a single frame with retry. On first failure, calls `refreshStreamUrl`
+ * to get a freshly-signed URL and tries once more. Logs full stderr.
+ */
+export async function extractFrameWithRetry(
+  initialStreamUrl: string,
+  refreshStreamUrl: () => Promise<string>,
+  timestampSec: number,
+  outPath: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  try {
+    await extractFrame(initialStreamUrl, timestampSec, outPath, signal);
+    return;
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    const e = err as FfmpegError;
+    console.warn(`[spy/frames] first attempt failed at ts=${timestampSec}s: ${e.message}\n  stderr: ${e.stderr ?? '(none)'}`);
+    const freshUrl = await refreshStreamUrl();
+    try {
+      await extractFrame(freshUrl, timestampSec, outPath, signal);
+    } catch (err2) {
+      const e2 = err2 as FfmpegError;
+      console.error(`[spy/frames] retry failed at ts=${timestampSec}s: ${e2.message}\n  stderr: ${e2.stderr ?? '(none)'}`);
+      throw err2;
+    }
+  }
+}
+
 export async function extractFramesForVideo(
-  streamUrl: string,
+  initialStreamUrl: string,
+  refreshStreamUrl: () => Promise<string>,
   durationSec: number,
   outPaths: string[],
   signal?: AbortSignal,
 ): Promise<Array<{ idx: number; timestampSec: number; path: string }>> {
   const timestamps = pickFrameTimestamps(durationSec, outPaths.length);
   const results: Array<{ idx: number; timestampSec: number; path: string }> = [];
+  let currentUrl = initialStreamUrl;
+  const refreshOnce = async () => {
+    currentUrl = await refreshStreamUrl();
+    return currentUrl;
+  };
   for (let i = 0; i < timestamps.length; i++) {
     const ts = timestamps[i];
     const outPath = outPaths[i];
     if (ts === undefined || outPath === undefined) continue;
-    await extractFrame(streamUrl, ts, outPath, signal);
+    await extractFrameWithRetry(currentUrl, refreshOnce, ts, outPath, signal);
     results.push({ idx: i + 1, timestampSec: ts, path: outPath });
   }
   return results;

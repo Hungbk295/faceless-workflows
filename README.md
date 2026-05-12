@@ -1,52 +1,93 @@
-# Faceless Studio (TS rewrite)
+# Faceless Studio 🎬
 
-Rewrite của `faceless_studio_v3.html` sang TypeScript với SQLite + Bun + React.
+**Hệ thống tự động hóa sản xuất nội dung video "Faceless" chuyên nghiệp.**
 
-## Architecture
+Faceless Studio là một công cụ toàn diện giúp bạn nghiên cứu, lập kế hoạch và tạo ra các video không cần lộ mặt (faceless) cho YouTube, TikTok... được xây dựng với hiệu năng cao bằng Bun, Hono và React.
 
-- **Server:** Bun + Hono + Drizzle ORM + SQLite (single file at `~/.faceless-studio/faceless.db`)
-- **Client:** Vite + React 18 + TypeScript strict + CSS Modules
-- **Shared:** types + zod schemas dùng chung
-- **Voice clips:** stored as `.mp3` files at `~/.faceless-studio/clips/<channel-id>/<num>.mp3`
+## 🚀 Tính năng cốt lõi
 
-## Setup
+### 1. 🕵️ Spy & Analysis (Nghiên cứu đối thủ)
+- Theo dõi và phân tích các kênh đối thủ trong cùng niche.
+- Tự động tải transcript, phân tích cấu trúc video và chụp frame hình ảnh để học hỏi phong cách.
+- Đánh giá chỉ số hiệu quả (view count, rank) để tìm ra các chủ đề "win".
 
-```bash
-cd faceless-studio
-bun install
-bun run db:push      # apply Drizzle schema → ~/.faceless-studio/faceless.db
-bun run dev          # starts both server (:3007) and client (:5177)
-```
+### 2. 📝 AI Script Generation (Biên kịch thông minh)
+- Hỗ trợ tạo kịch bản với Claude AI, tối ưu hóa theo Hook - Angle - Pillar.
+- Tùy chỉnh cấu trúc kịch bản linh hoạt (POV, thời lượng, cấu trúc phân đoạn).
+- Quản lý kho kịch bản theo từng channel riêng biệt.
 
-Open http://localhost:5177
+### 3. 🎙️ Voiceover (TTS) Integration
+- Tích hợp sâu với **ElevenLabs** (hỗ trợ đa ngôn ngữ, bao gồm Tiếng Việt).
+- Tự động hóa quy trình generate audio từ kịch bản, quản lý và lưu trữ voice clips cục bộ.
+- Tùy chỉnh tham số giọng nói (stability, similarity boost, speed).
 
-## Scripts
+### 4. 🎬 Scene Management (Phân cảnh & Visual)
+- Tự động chia nhỏ kịch bản thành các phân cảnh (scenes).
+- Gợi ý mô tả hình ảnh/video (visual prompts) cho từng cảnh: bối cảnh, nhân vật, góc máy.
+- Quản lý kho tài nguyên (inventory) và các câu lệnh prompt tối ưu.
 
-- `bun run dev` — start both server + client in parallel
-- `bun run dev:server` — server only on :3007 (override với `PORT=...`)
-- `bun run dev:client` — Vite client only on :5177
-- `bun run build` — production build (client static + server bundle)
-- `bun run db:push` — apply schema changes to DB
-- `bun run db:generate` — generate migration files from schema
-- `bun run typecheck` — tsc --noEmit across all workspaces
+---
 
-## Data location
+## 🛠️ Stack kỹ thuật
 
-```
-~/.faceless-studio/
-├── faceless.db          # SQLite — channels, scripts, scenes, ...
-├── clips/               # voice mp3 files
-│   └── <channel-id>/
-│       └── 001.mp3
-└── exports/             # downloaded backups (.faceless.json, .db)
-```
+- **Runtime:** [Bun](https://bun.sh/) (Siêu nhanh, thay thế Node.js)
+- **Backend:** Hono + Drizzle ORM + SQLite
+- **Frontend:** React 18 + Vite + TypeScript + CSS Modules
+- **Database:** SQLite (Lưu trữ cục bộ tại `~/.faceless-studio/faceless.db`)
 
-⚠️ **Security note:** `faceless.db` chứa TTS API keys (ElevenLabs, etc.) plaintext. File chỉ readable bởi user (mode 600). Backup và share cẩn thận.
+---
 
-## See also
+## 📦 Cài đặt & Sử dụng
 
-- `../PLAN_TS_REWRITE.md` — full architecture decisions + 14-stage type definitions
-- `../faceless_studio_v3.html` — primary reference (1:1 port target)
-# faceless-workflow
-# faceless-workflow
-# faceless-workflows
+### Yêu cầu
+- Đã cài đặt [Bun](https://bun.sh/).
+
+### Các bước cài đặt
+1. Cài đặt dependencies:
+   ```bash
+   bun install
+   ```
+2. Khởi tạo database:
+   ```bash
+   bun run db:push
+   ```
+3. Khởi chạy ứng dụng:
+   ```bash
+   bun run dev
+   ```
+   *Ứng dụng sẽ chạy tại: [http://localhost:5177](http://localhost:5177)*
+
+### Các lệnh hữu ích
+- `bun run dev`: Chạy cả Server và Client song song.
+- `bun run build`: Build production.
+- `bun run typecheck`: Kiểm tra lỗi TypeScript toàn project.
+
+---
+
+## 📂 Cấu trúc thư mục
+
+- `client/`: Mã nguồn giao diện người dùng (Vite + React).
+- `server/`: API Server và Logic xử lý (Hono + Drizzle).
+- `shared/`: Các kiểu dữ liệu (Types) và Zod schemas dùng chung.
+- `~/.faceless-studio/`: Thư mục lưu trữ dữ liệu người dùng (DB, audio clips, exports).
+
+---
+
+## 🔒 Bảo mật & Dữ liệu
+
+- **API Keys:** Các API key (ElevenLabs, Claude...) được lưu trữ trong SQLite local. Hãy cẩn thận khi backup hoặc chia sẻ file `.db`.
+- **Lưu trữ:** Mặc định dữ liệu nằm tại `~/.faceless-studio/`. File database chỉ có quyền đọc bởi user sở hữu (mode 600).
+
+---
+
+## 📝 Tham khảo thêm
+
+- `../PLAN_TS_REWRITE.md` — Quyết định kiến trúc & định nghĩa Type.
+- `../faceless_studio_v3.html` — Phiên bản gốc (mục tiêu chuyển đổi 1:1).
+
+---
+
+## 📝 License
+
+Dự án này là mã nguồn riêng tư.
+

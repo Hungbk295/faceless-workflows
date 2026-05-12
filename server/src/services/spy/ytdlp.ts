@@ -91,14 +91,30 @@ interface RawVideoJson {
 
 function pickStreamUrl(formats: RawFormat[] | undefined): string | null {
   if (!formats || formats.length === 0) return null;
-  const candidates = formats.filter((f) =>
+  const usable = formats.filter((f) =>
     f.ext === 'mp4' &&
     typeof f.vcodec === 'string' && f.vcodec !== 'none' &&
     typeof f.url === 'string' && f.url.length > 0 &&
     (!f.protocol || /^https?$/.test(f.protocol))
   );
-  if (candidates.length === 0) return null;
-  const sorted = [...candidates].sort((a, b) => {
+  if (usable.length === 0) return null;
+
+  // 1st priority: combined audio+video mp4 (more reliable for HTTP seek than DASH video-only).
+  const combined = usable.filter((f) => typeof f.acodec === 'string' && f.acodec !== 'none');
+  if (combined.length > 0) {
+    const sorted = [...combined].sort((a, b) => {
+      const ha = a.height ?? 0;
+      const hb = b.height ?? 0;
+      if (ha <= 720 && hb <= 720) return hb - ha;
+      if (ha > 720 && hb <= 720) return 1;
+      if (hb > 720 && ha <= 720) return -1;
+      return ha - hb;
+    });
+    return sorted[0]?.url ?? null;
+  }
+
+  // Fallback: DASH video-only.
+  const sorted = [...usable].sort((a, b) => {
     const ha = a.height ?? 0;
     const hb = b.height ?? 0;
     if (ha <= 720 && hb <= 720) return hb - ha;
@@ -107,6 +123,23 @@ function pickStreamUrl(formats: RawFormat[] | undefined): string | null {
     return ha - hb;
   });
   return sorted[0]?.url ?? null;
+}
+
+const STREAM_FORMAT_SELECTOR =
+  'best[ext=mp4][acodec!=none][height<=720]/best[ext=mp4][height<=720]/best[height<=720]';
+
+/**
+ * Fetch a freshly-signed stream URL. Use this right before extracting frames
+ * to avoid stale URLs from older metadata calls.
+ */
+export async function fetchStreamUrl(videoId: string, signal?: AbortSignal): Promise<string> {
+  const { stdout } = await run(
+    ['-g', '-f', STREAM_FORMAT_SELECTOR, '--no-warnings', `https://youtu.be/${videoId}`],
+    signal,
+  );
+  const url = stdout.trim().split('\n')[0];
+  if (!url) throw new YtDlpError(`fetchStreamUrl: empty output for ${videoId}`);
+  return url;
 }
 
 export async function fetchVideoInfo(videoId: string, signal?: AbortSignal): Promise<VideoInfo> {
