@@ -47,6 +47,13 @@ function normalizeChannelUrl(raw: string): string {
   return `${noQuery}/videos`;
 }
 
+export function getYoutubeVideoId(url: string): string | null {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  const id = match?.[2];
+  return (id && id.length === 11) ? id : null;
+}
+
 export function getEmitter(channelId: string): EventTarget | null {
   return jobs.get(channelId)?.emitter ?? null;
 }
@@ -160,13 +167,28 @@ async function pipeline(
   signal: AbortSignal,
   emitter: EventTarget,
 ): Promise<void> {
-  // 1. List candidates. Normalize URL so we always hit the /videos tab
-  // (a bare channel URL gives /featured which only lists ~12 curated items).
-  const normalizedUrl = normalizeChannelUrl(sourceUrl);
-  console.log(`[spy] listing candidates from ${normalizedUrl} (limit=${SPY_SCAN_LIMIT})`);
-  const { channelTitle, videoIds } = await listChannelCandidates(normalizedUrl, SPY_SCAN_LIMIT, signal);
+  const singleVideoId = getYoutubeVideoId(sourceUrl);
+  const isSingleVideo = !!singleVideoId;
+
+  let channelTitle = '';
+  let videoIds: string[] = [];
+
+  if (isSingleVideo && singleVideoId) {
+    console.log(`[spy] recognized single video URL: ${singleVideoId}`);
+    channelTitle = `Video Reference`;
+    videoIds = [singleVideoId];
+  } else {
+    // 1. List candidates. Normalize URL so we always hit the /videos tab
+    // (a bare channel URL gives /featured which only lists ~12 curated items).
+    const normalizedUrl = normalizeChannelUrl(sourceUrl);
+    console.log(`[spy] listing candidates from ${normalizedUrl} (limit=${SPY_SCAN_LIMIT})`);
+    const res = await listChannelCandidates(normalizedUrl, SPY_SCAN_LIMIT, signal);
+    channelTitle = res.channelTitle;
+    videoIds = res.videoIds;
+  }
+
   if (signal.aborted) return;
-  if (videoIds.length === 0) throw new Error(`no videos found at ${normalizedUrl}`);
+  if (videoIds.length === 0) throw new Error(`no videos found at ${sourceUrl}`);
   console.log(`[spy] got ${videoIds.length} candidate ids from "${channelTitle}"`);
 
   persistRun(channelId, {
@@ -194,10 +216,10 @@ async function pipeline(
 
   // 3. Filter out Shorts (< SPY_MIN_DURATION) then sort by view count, take top N
   const totalFetched = infos.length;
-  const longForm = infos.filter((v) => v.durationSec >= SPY_MIN_DURATION);
+  const longForm = isSingleVideo ? infos : infos.filter((v) => v.durationSec >= SPY_MIN_DURATION);
   const durationsDesc = [...infos].map((v) => v.durationSec).sort((a, b) => b - a);
   const top5Dur = durationsDesc.slice(0, 5).join(', ');
-  console.log(`[spy] metadata: ${totalFetched}/${videoIds.length} succeeded, ${longForm.length} long-form (>= ${SPY_MIN_DURATION}s). top5 durations: ${top5Dur}`);
+  console.log(`[spy] metadata: ${totalFetched}/${videoIds.length} succeeded, ${longForm.length} long-form. top5 durations: ${top5Dur}`);
 
   // Fallback: if everything is short-form, still surface results (rank by views)
   // so the user gets *something* and can lower SPY_MIN_DURATION if needed.
@@ -207,14 +229,14 @@ async function pipeline(
     pool = infos;
   }
 
-  const topVideos = [...pool]
-    .sort((a, b) => b.viewCount - a.viewCount)
-    .slice(0, SPY_TOP_N);
+  const topVideos = isSingleVideo
+    ? pool.slice(0, 1)
+    : [...pool].sort((a, b) => b.viewCount - a.viewCount).slice(0, SPY_TOP_N);
 
   if (topVideos.length === 0) {
     throw new Error(
       `no usable videos: scanned=${videoIds.length}, metadata_ok=${totalFetched}, long_form=${longForm.length}. ` +
-      `Check that the URL is a channel page (got: ${normalizedUrl}).`,
+      `Check that the URL is a channel page (got: ${sourceUrl}).`,
     );
   }
 
@@ -230,7 +252,7 @@ async function pipeline(
       durationSec: v.durationSec,
       publishedAt: v.uploadDate,
       transcriptStatus: 'pending',
-      framesStatus: i < SPY_FRAMES_FROM ? 'pending' : 'skipped',
+      framesStatus: i < (isSingleVideo ? 1 : SPY_FRAMES_FROM) ? 'pending' : 'skipped',
     }).returning({ id: schema.spyVideos.id }).get();
     return { info: v, rowId: row.id, rank: i + 1 };
   });
@@ -283,8 +305,9 @@ async function pipeline(
   if (signal.aborted) return;
 
   // 6. Frames for top N videos
-  const framesTargets = ranked.slice(0, SPY_FRAMES_FROM);
-  const framesTotal = framesTargets.length * SPY_FRAMES_PER_VIDEO;
+  const framesTargets = ranked.slice(0, isSingleVideo ? 1 : SPY_FRAMES_FROM);
+  const framesPerVideo = isSingleVideo ? 20 : SPY_FRAMES_PER_VIDEO;
+  const framesTotal = framesTargets.length * framesPerVideo;
   persistRun(channelId, { step: 'frames', progress: 0, total: framesTotal });
   emit(emitter, {
     type: 'progress', step: 'frames', progress: 0, total: framesTotal,
@@ -297,12 +320,12 @@ async function pipeline(
     const { info: v, rowId: videoRowId } = rv;
     if (v.durationSec <= 0) {
       db.update(schema.spyVideos).set({ framesStatus: 'error' }).where(eq(schema.spyVideos.id, videoRowId)).run();
-      framesDone += SPY_FRAMES_PER_VIDEO;
+      framesDone += framesPerVideo;
       persistRun(channelId, { progress: framesDone });
       emit(emitter, { type: 'progress', step: 'frames', progress: framesDone, total: framesTotal });
       continue;
     }
-    const outPaths = Array.from({ length: SPY_FRAMES_PER_VIDEO }, (_, k) =>
+    const outPaths = Array.from({ length: framesPerVideo }, (_, k) =>
       spyFramePath(channelId, v.videoId, k + 1),
     );
     try {
@@ -310,25 +333,31 @@ async function pipeline(
       // may have aged 30s+ and DASH URLs can throttle on stale clients).
       const initialUrl = await fetchStreamUrl(v.videoId, signal);
       const refresh = () => fetchStreamUrl(v.videoId, signal);
-      const frames = await extractFramesForVideo(initialUrl, refresh, v.durationSec, outPaths, signal);
-      for (const f of frames) {
-        db.insert(schema.spyFrames).values({
-          videoRowId,
-          idx: f.idx,
-          timestampSec: f.timestampSec,
-          framePath: f.path,
-        }).run();
-        framesDone++;
-        persistRun(channelId, { progress: framesDone });
-        emit(emitter, { type: 'progress', step: 'frames', progress: framesDone, total: framesTotal });
-      }
+      await extractFramesForVideo(
+        initialUrl,
+        refresh,
+        v.durationSec,
+        outPaths,
+        (idx, ts, path) => {
+          db.insert(schema.spyFrames).values({
+            videoRowId,
+            idx,
+            timestampSec: ts,
+            framePath: path,
+          }).run();
+          framesDone++;
+          persistRun(channelId, { progress: framesDone });
+          emit(emitter, { type: 'progress', step: 'frames', progress: framesDone, total: framesTotal });
+        },
+        signal,
+      );
       db.update(schema.spyVideos).set({ framesStatus: 'ok' }).where(eq(schema.spyVideos.id, videoRowId)).run();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`[spy/frames] video ${v.videoId} failed: ${msg}`);
       db.update(schema.spyVideos).set({ framesStatus: 'error' }).where(eq(schema.spyVideos.id, videoRowId)).run();
-      const remaining = SPY_FRAMES_PER_VIDEO - (framesDone % SPY_FRAMES_PER_VIDEO);
-      framesDone += remaining === SPY_FRAMES_PER_VIDEO ? 0 : remaining;
+      const remaining = framesPerVideo - (framesDone % framesPerVideo);
+      framesDone += remaining === framesPerVideo ? 0 : remaining;
       persistRun(channelId, { progress: framesDone });
       emit(emitter, { type: 'progress', step: 'frames', progress: framesDone, total: framesTotal });
     }

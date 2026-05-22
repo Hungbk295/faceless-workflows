@@ -1,10 +1,24 @@
-.bar {
+.formContainer {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.inputsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.urlWrap {
+  flex: 1;
+  min-width: 280px;
+}
+.actionsRow {
+  display: flex;
   align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
 }
-.bar .urlWrap { flex: 1; min-width: 280px; }
 
 .progress {
   margin-top: 16px;

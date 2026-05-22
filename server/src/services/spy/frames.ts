@@ -110,21 +110,52 @@ export async function extractFramesForVideo(
   refreshStreamUrl: () => Promise<string>,
   durationSec: number,
   outPaths: string[],
+  onProgress?: (idx: number, timestampSec: number, path: string) => Promise<void> | void,
   signal?: AbortSignal,
 ): Promise<Array<{ idx: number; timestampSec: number; path: string }>> {
   const timestamps = pickFrameTimestamps(durationSec, outPaths.length);
   const results: Array<{ idx: number; timestampSec: number; path: string }> = [];
   let currentUrl = initialStreamUrl;
+
+  let isRefreshing = false;
+  let refreshPromise: Promise<string> | null = null;
+
   const refreshOnce = async () => {
-    currentUrl = await refreshStreamUrl();
+    if (isRefreshing && refreshPromise) return refreshPromise;
+    isRefreshing = true;
+    refreshPromise = refreshStreamUrl().finally(() => {
+      isRefreshing = false;
+      refreshPromise = null;
+    });
+    currentUrl = await refreshPromise;
     return currentUrl;
   };
-  for (let i = 0; i < timestamps.length; i++) {
-    const ts = timestamps[i];
-    const outPath = outPaths[i];
-    if (ts === undefined || outPath === undefined) continue;
-    await extractFrameWithRetry(currentUrl, refreshOnce, ts, outPath, signal);
-    results.push({ idx: i + 1, timestampSec: ts, path: outPath });
-  }
+
+  const tasks = timestamps.map((ts, i) => ({ ts, outPath: outPaths[i], idx: i + 1 }));
+  const limit = outPaths.length > 5 ? 4 : 2;
+  const queue = [...tasks];
+
+  const worker = async () => {
+    while (queue.length > 0 && !signal?.aborted) {
+      const task = queue.shift();
+      if (!task) break;
+      const { ts, outPath, idx } = task;
+      if (ts === undefined || outPath === undefined) continue;
+
+      await extractFrameWithRetry(currentUrl, refreshOnce, ts, outPath, signal);
+
+      const frameResult = { idx, timestampSec: ts, path: outPath };
+      results.push(frameResult);
+
+      if (onProgress) {
+        await onProgress(idx, ts, outPath);
+      }
+    }
+  };
+
+  const workers = Array.from({ length: Math.min(limit, queue.length) }, worker);
+  await Promise.all(workers);
+
+  results.sort((a, b) => a.idx - b.idx);
   return results;
 }

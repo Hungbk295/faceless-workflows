@@ -80,6 +80,7 @@ function fmtDuration(sec: number): string {
 
 export function SpyChannelPanel({ channel, isAttached, onToggleAttachment }: Props) {
   const [url, setUrl] = useState(channel.refUrl);
+  const [videoUrl, setVideoUrl] = useState('');
   const [lightbox, setLightbox] = useState<string | null>(null);
   useEffect(() => { setUrl(channel.refUrl); }, [channel.refUrl]);
 
@@ -104,10 +105,22 @@ export function SpyChannelPanel({ channel, isAttached, onToggleAttachment }: Pro
     [videos],
   );
 
-  const onRun = () => {
+  const onRunChannel = () => {
     const trimmed = url.trim();
     if (!trimmed) {
       toast('Cần URL channel', 'error');
+      return;
+    }
+    runMut.mutate(
+      { url: trimmed },
+      { onError: (e) => toast(e.message, 'error') },
+    );
+  };
+
+  const onRunVideo = () => {
+    const trimmed = videoUrl.trim();
+    if (!trimmed) {
+      toast('Cần URL video', 'error');
       return;
     }
     runMut.mutate(
@@ -126,30 +139,47 @@ export function SpyChannelPanel({ channel, isAttached, onToggleAttachment }: Pro
   };
 
   return (
-    <Card label="Step 01.5" title={<>🕵️ Spy <span style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--rust)' }}>Reference Channel</span></>}>
+    <Card label="Step 01.5" title={<>🕵️ Spy <span style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--rust)' }}>Reference Channel / Video</span></>}>
       <p style={{ marginBottom: 12 }}>
-        Lấy top 10 video view cao nhất của kênh tham chiếu (thumbnail + transcript), kèm 3 frame ngẫu nhiên từ 3 video top. Hữu ích để tìm cảm hứng cho thumbnail + nội dung.
+        Lấy dữ liệu tham chiếu từ kênh (Top 10 video view cao nhất, kèm 3 frame ngẫu nhiên mỗi video) hoặc một video cụ thể (lấy toàn bộ transcript, thumbnail và trích xuất 20 frame ảnh chi tiết).
       </p>
-      <div className={styles.bar}>
-        <div className={styles.urlWrap}>
-          <Input
-            label="Channel URL"
-            id="spy-url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://youtube.com/@channelname"
-            disabled={isRunning}
-          />
+      <div className={styles.formContainer}>
+        <div className={styles.inputsStack}>
+          <div className={styles.urlWrap}>
+            <Input
+              label="Channel URL"
+              id="spy-url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://youtube.com/@channelname"
+              disabled={isRunning}
+            />
+          </div>
+          <div className={styles.urlWrap}>
+            <Input
+              label="Video URL"
+              id="spy-video-url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://youtube.com/watch?v=..."
+              disabled={isRunning}
+            />
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className={styles.actionsRow}>
           {isRunning ? (
             <Button variant="secondary" onClick={onCancel} disabled={cancelMut.isPending}>
               ⏹ Cancel
             </Button>
           ) : (
-            <Button variant="rust" onClick={onRun} disabled={runMut.isPending}>
-              {runMut.isPending ? 'Starting…' : '🕵️ Spy'}
-            </Button>
+            <>
+              <Button variant="rust" onClick={onRunChannel} disabled={runMut.isPending}>
+                {runMut.isPending ? 'Starting…' : '🕵️ Spy Channel'}
+              </Button>
+              <Button variant="secondary" onClick={onRunVideo} disabled={runMut.isPending}>
+                {runMut.isPending ? 'Starting…' : '📹 Spy Video'}
+              </Button>
+            </>
           )}
           {videos.length > 0 && !isRunning && (
             <Button variant="ghost" onClick={onClear} disabled={deleteMut.isPending}>
