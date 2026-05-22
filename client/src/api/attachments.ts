@@ -44,4 +44,21 @@ export async function saveAttachmentsToFolder(
   }
   return parsed as any;
 }
+export async function openFolderInFinder(channelId: string, folder: string): Promise<{ success: boolean }> {
+  const res = await fetch(`${base(channelId)}/open-folder`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folder }),
+  });
+  const text = await res.text();
+  const parsed: unknown = text ? JSON.parse(text) : null;
+  if (!res.ok) {
+    const msg = parsed && typeof parsed === 'object' && 'message' in parsed
+      ? String((parsed as { message?: unknown }).message)
+      : `HTTP ${res.status}`;
+    throw new ApiError(res.status, msg, parsed);
+  }
+  return parsed as { success: boolean };
+}
+
 

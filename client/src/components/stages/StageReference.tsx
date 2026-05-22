@@ -116,6 +116,8 @@ export function StageReference({ channel }: Props) {
           onRemove={attachments.removeFile}
           onUploadFile={attachments.uploadFile}
           onSaveToFolderNative={attachments.saveToFolderNative}
+          lastSavedFolder={attachments.lastSavedFolder}
+          onOpenFolder={attachments.openSavedFolder}
         />
         <ClaudeRunPanel
           bridge={bridge}

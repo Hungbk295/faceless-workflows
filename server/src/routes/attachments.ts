@@ -201,4 +201,19 @@ attachmentsRoute.post('/save-to-folder', async (c) => {
   });
 });
 
+attachmentsRoute.post('/open-folder', async (c) => {
+  const { folder } = (await c.req.json()) as { folder: string };
+  if (!folder || typeof folder !== 'string') {
+    throw new HTTPException(400, { message: 'invalid folder path' });
+  }
+
+  try {
+    spawn('open', [folder]);
+    return c.json({ success: true });
+  } catch (err) {
+    throw new HTTPException(500, { message: `Không thể mở thư mục: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+
 

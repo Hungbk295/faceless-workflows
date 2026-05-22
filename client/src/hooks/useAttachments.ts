@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { deleteAttachment, uploadAttachment, saveAttachmentsToFolder } from '../api/attachments.ts';
+import { deleteAttachment, uploadAttachment, saveAttachmentsToFolder, openFolderInFinder } from '../api/attachments.ts';
 
 
 export type AttachmentKind = 'video' | 'frame' | 'file';
@@ -99,6 +99,8 @@ export function useAttachments(channelId: string) {
 
   const clear = useCallback(() => setItems([]), []);
 
+  const [lastSavedFolder, setLastSavedFolder] = useState<string | null>(null);
+
   const saveToFolderNative = useCallback(async () => {
     const targetItems = items.filter((it) => it.serverPath);
     if (targetItems.length === 0) {
@@ -106,6 +108,9 @@ export function useAttachments(channelId: string) {
     }
 
     const res = await saveAttachmentsToFolder(channelId, '', targetItems);
+    if (res.success && res.folder && !(res as any).cancelled) {
+      setLastSavedFolder(res.folder);
+    }
     return {
       successCount: res.copiedCount,
       failCount: res.errors ? res.errors.length : 0,
@@ -114,6 +119,15 @@ export function useAttachments(channelId: string) {
     };
   }, [channelId, items]);
 
-  return { items, isAttached, add, remove, toggle, uploadFile, removeFile, clear, saveToFolderNative };
+  const openSavedFolder = useCallback(async () => {
+    if (!lastSavedFolder) return;
+    try {
+      await openFolderInFinder(channelId, lastSavedFolder);
+    } catch (err) {
+      console.error('Không thể mở thư mục:', err);
+    }
+  }, [channelId, lastSavedFolder]);
+
+  return { items, isAttached, add, remove, toggle, uploadFile, removeFile, clear, saveToFolderNative, lastSavedFolder, openSavedFolder };
 }
 

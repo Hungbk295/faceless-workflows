@@ -266,3 +266,30 @@
   color: var(--ink-weak);
 }
 
+.openFolderBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.openFolderBtn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--ink-soft);
+}
+:global(body.dark) .openFolderBtn {
+  border-color: var(--dark-line);
+  color: var(--dark-ink);
+}
+:global(body.dark) .openFolderBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+

@@ -8,6 +8,8 @@ interface Props {
   onRemove: (item: AttachmentItem) => void;
   onUploadFile: (file: File) => Promise<unknown>;
   onSaveToFolderNative?: () => Promise<{ successCount: number; failCount: number; cancelled?: boolean; folder?: string }>;
+  lastSavedFolder?: string | null;
+  onOpenFolder?: () => void;
 }
 
 const KIND_ICON: Record<AttachmentItem['kind'], string> = {
@@ -16,7 +18,7 @@ const KIND_ICON: Record<AttachmentItem['kind'], string> = {
   file: '📎',
 };
 
-export function AttachmentsPanel({ items, onRemove, onUploadFile, onSaveToFolderNative }: Props) {
+export function AttachmentsPanel({ items, onRemove, onUploadFile, onSaveToFolderNative, lastSavedFolder, onOpenFolder }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(0);
@@ -94,6 +96,16 @@ export function AttachmentsPanel({ items, onRemove, onUploadFile, onSaveToFolder
               title="Mở thư mục trên máy để lưu tất cả ảnh/file"
             >
               {saving ? '⏳ Đang lưu…' : '💾 Lưu vào thư mục khác'}
+            </button>
+          )}
+          {lastSavedFolder && onOpenFolder && (
+            <button
+              type="button"
+              className={styles.openFolderBtn}
+              onClick={onOpenFolder}
+              title="Mở thư mục vừa lưu trong Finder"
+            >
+              📂 Mở thư mục
             </button>
           )}
         </div>
