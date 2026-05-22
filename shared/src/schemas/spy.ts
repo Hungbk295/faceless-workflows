@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const spyRunInputSchema = z.object({
   url: z.string().trim().min(1).max(2000),
+  framesCount: z.number().int().min(1).max(200).optional(),
 }).strict();
 export type SpyRunInput = z.infer<typeof spyRunInputSchema>;
 

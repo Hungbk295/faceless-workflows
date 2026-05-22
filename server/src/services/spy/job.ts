@@ -114,7 +114,11 @@ async function runWithConcurrency<T>(
   await Promise.all(workers);
 }
 
-export async function startSpyRun(channelId: string, sourceUrl: string): Promise<EventTarget> {
+export async function startSpyRun(
+  channelId: string,
+  sourceUrl: string,
+  framesCount?: number,
+): Promise<EventTarget> {
   const prior = jobs.get(channelId);
   if (prior) {
     prior.ctrl.abort();
@@ -141,7 +145,7 @@ export async function startSpyRun(channelId: string, sourceUrl: string): Promise
 
   emit(emitter, { type: 'progress', step: 'list', progress: 0, total: 0, message: 'Listing videos' });
 
-  pipeline(channelId, sourceUrl, ctrl.signal, emitter)
+  pipeline(channelId, sourceUrl, framesCount, ctrl.signal, emitter)
     .catch((err) => {
       if (ctrl.signal.aborted) return;
       const message = err instanceof Error ? err.message : String(err);
@@ -164,6 +168,7 @@ export async function startSpyRun(channelId: string, sourceUrl: string): Promise
 async function pipeline(
   channelId: string,
   sourceUrl: string,
+  customFramesCount: number | undefined,
   signal: AbortSignal,
   emitter: EventTarget,
 ): Promise<void> {
@@ -306,7 +311,7 @@ async function pipeline(
 
   // 6. Frames for top N videos
   const framesTargets = ranked.slice(0, isSingleVideo ? 1 : SPY_FRAMES_FROM);
-  const framesPerVideo = isSingleVideo ? 20 : SPY_FRAMES_PER_VIDEO;
+  const framesPerVideo = customFramesCount ?? (isSingleVideo ? 20 : SPY_FRAMES_PER_VIDEO);
   const framesTotal = framesTargets.length * framesPerVideo;
   persistRun(channelId, { step: 'frames', progress: 0, total: framesTotal });
   emit(emitter, {

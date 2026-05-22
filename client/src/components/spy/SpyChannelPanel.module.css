@@ -20,6 +20,23 @@
   flex-wrap: wrap;
 }
 
+.sliderWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.sliderLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.sliderHint {
+  font-size: 11px;
+  color: var(--ink-weak);
+  line-height: 1.4;
+}
+
 .progress {
   margin-top: 16px;
   padding: 12px 14px;

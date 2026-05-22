@@ -81,6 +81,7 @@ function fmtDuration(sec: number): string {
 export function SpyChannelPanel({ channel, isAttached, onToggleAttachment }: Props) {
   const [url, setUrl] = useState(channel.refUrl);
   const [videoUrl, setVideoUrl] = useState('');
+  const [framesCount, setFramesCount] = useState(20);
   const [lightbox, setLightbox] = useState<string | null>(null);
   useEffect(() => { setUrl(channel.refUrl); }, [channel.refUrl]);
 
@@ -124,7 +125,7 @@ export function SpyChannelPanel({ channel, isAttached, onToggleAttachment }: Pro
       return;
     }
     runMut.mutate(
-      { url: trimmed },
+      { url: trimmed, framesCount },
       { onError: (e) => toast(e.message, 'error') },
     );
   };
@@ -164,6 +165,24 @@ export function SpyChannelPanel({ channel, isAttached, onToggleAttachment }: Pro
               placeholder="https://youtube.com/watch?v=..."
               disabled={isRunning}
             />
+          </div>
+          <div className={styles.sliderWrap}>
+            <label htmlFor="spy-frames-count" className={styles.sliderLabel}>
+              Số lượng frame ảnh trích xuất: <strong style={{ color: 'var(--rust)', fontSize: '1.1rem' }}>{framesCount}</strong> frame
+            </label>
+            <input
+              type="range"
+              id="spy-frames-count"
+              min="5"
+              max="150"
+              step="5"
+              value={framesCount}
+              onChange={(e) => setFramesCount(parseInt(e.target.value))}
+              disabled={isRunning}
+              className={styles.rangeInput}
+              style={{ width: '100%', height: '6px', background: 'var(--ink-border)', borderRadius: '4px', outline: 'none', cursor: 'pointer', accentColor: 'var(--rust)', margin: '8px 0' }}
+            />
+            <span className={styles.sliderHint}>Lấy nhiều frame sẽ giúp bạn nắm bắt chi tiết visual của video, tối đa lên tới 150 frame.</span>
           </div>
         </div>
         <div className={styles.actionsRow}>

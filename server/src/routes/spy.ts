@@ -113,8 +113,8 @@ spyRoute.get('/', (c) => {
 spyRoute.post('/run', validateJson(spyRunInputSchema), async (c) => {
   const channelId = parseChannelId(c.req.param('channelId') ?? '');
   ensureChannelExists(channelId);
-  const { url } = getValidatedJson<typeof spyRunInputSchema>(c) as SpyRunInput;
-  await startSpyRun(channelId, url);
+  const { url, framesCount } = getValidatedJson<typeof spyRunInputSchema>(c) as SpyRunInput;
+  await startSpyRun(channelId, url, framesCount);
   return c.json({ running: true });
 });
 
