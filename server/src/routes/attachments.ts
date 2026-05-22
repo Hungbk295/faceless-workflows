@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { mkdir, stat, unlink, copyFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { extname, join } from 'node:path';
@@ -99,18 +100,59 @@ attachmentsRoute.delete('/:id', async (c) => {
   }
 });
 
+function selectFolderDialog(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn('osascript', [
+      '-e',
+      'POSIX path of (choose folder with prompt "Chọn thư mục để lưu ảnh:")'
+    ]);
+    
+    let stdout = '';
+    let stderr = '';
+    
+    proc.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+    proc.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+    
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve(stdout.trim());
+      } else {
+        reject(new Error(stderr.trim() || `AppleScript exited with code ${code}`));
+      }
+    });
+  });
+}
+
 attachmentsRoute.post('/save-to-folder', async (c) => {
   const channelId = parseChannelId(c.req.param('channelId') ?? '');
   ensureChannelExists(channelId);
 
-  const { targetFolder, items } = (await c.req.json()) as { targetFolder: string; items: any[] };
-  if (!targetFolder || typeof targetFolder !== 'string') {
-    throw new HTTPException(400, { message: 'invalid target folder' });
+  const { targetFolder, items } = (await c.req.json()) as { targetFolder?: string; items: any[] };
+  if (!items || !Array.isArray(items)) {
+    throw new HTTPException(400, { message: 'invalid items' });
   }
 
-  let folderPath = targetFolder.trim();
-  if (folderPath.startsWith('~')) {
-    folderPath = join(homedir(), folderPath.slice(1));
+  let folderPath = '';
+  if (targetFolder && typeof targetFolder === 'string' && targetFolder.trim()) {
+    folderPath = targetFolder.trim();
+    if (folderPath.startsWith('~')) {
+      folderPath = join(homedir(), folderPath.slice(1));
+    }
+  } else {
+    // Open macOS native Directory Picker dialog via AppleScript
+    try {
+      folderPath = await selectFolderDialog();
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg.includes('User canceled') || errMsg.includes('User cancelled')) {
+        return c.json({ success: true, cancelled: true, copiedCount: 0 });
+      }
+      throw new HTTPException(500, { message: `Lỗi mở hộp thoại chọn thư mục: ${errMsg}` });
+    }
   }
 
   try {
@@ -158,4 +200,5 @@ attachmentsRoute.post('/save-to-folder', async (c) => {
     errors: errors.length > 0 ? errors : undefined,
   });
 });
+
 

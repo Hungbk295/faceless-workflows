@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { deleteAttachment, uploadAttachment } from '../api/attachments.ts';
+import { deleteAttachment, uploadAttachment, saveAttachmentsToFolder } from '../api/attachments.ts';
 
 
 export type AttachmentKind = 'video' | 'frame' | 'file';
@@ -105,51 +105,13 @@ export function useAttachments(channelId: string) {
       throw new Error('Chưa có ảnh/file nào được đính kèm để lưu');
     }
 
-    const dirHandle = await (window as any).showDirectoryPicker({
-      mode: 'readwrite'
-    });
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const item of targetItems) {
-      try {
-        // Resolve original filename
-        let filename = item.label || 'file';
-        if (item.kind === 'frame' && item.serverPath) {
-          filename = item.serverPath.split(/[/\\]/).pop() || filename;
-        } else if (item.kind === 'video' && item.serverPath) {
-          filename = item.serverPath.split(/[/\\]/).pop() || filename;
-        }
-        filename = filename.replace(/[/\\]/g, '_');
-
-        // Determine file URL to fetch from server
-        let fileUrl = item.previewUrl;
-        if (!fileUrl && item.kind === 'file') {
-          const fileId = item.id.replace(/^file:/, '');
-          fileUrl = `/api/channels/${channelId}/attachments/file/${encodeURIComponent(fileId)}`;
-        }
-
-        if (!fileUrl) continue;
-
-        // Fetch the file as blob
-        const res = await fetch(fileUrl);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const blob = await res.blob();
-
-        // Write to native directory
-        const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        successCount++;
-      } catch (err) {
-        console.error(`Lỗi lưu file ${item.label}:`, err);
-        failCount++;
-      }
-    }
-
-    return { successCount, failCount };
+    const res = await saveAttachmentsToFolder(channelId, '', targetItems);
+    return {
+      successCount: res.copiedCount,
+      failCount: res.errors ? res.errors.length : 0,
+      cancelled: (res as any).cancelled || false,
+      folder: res.folder,
+    };
   }, [channelId, items]);
 
   return { items, isAttached, add, remove, toggle, uploadFile, removeFile, clear, saveToFolderNative };

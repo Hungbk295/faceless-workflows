@@ -7,7 +7,7 @@ interface Props {
   items: AttachmentItem[];
   onRemove: (item: AttachmentItem) => void;
   onUploadFile: (file: File) => Promise<unknown>;
-  onSaveToFolderNative?: () => Promise<{ successCount: number; failCount: number }>;
+  onSaveToFolderNative?: () => Promise<{ successCount: number; failCount: number; cancelled?: boolean; folder?: string }>;
 }
 
 const KIND_ICON: Record<AttachmentItem['kind'], string> = {
@@ -55,16 +55,16 @@ export function AttachmentsPanel({ items, onRemove, onUploadFile, onSaveToFolder
     setSaving(true);
     try {
       const res = await onSaveToFolderNative();
+      if (res.cancelled) {
+        return; // user cancelled Finder choose folder dialog, do nothing
+      }
       if (res.successCount > 0) {
-        toast(`Đã lưu thành công ${res.successCount} file vào thư mục bạn chọn.`, 'success');
+        toast(`Đã lưu thành công ${res.successCount} file vào thư mục: ${res.folder || 'đã chọn'}.`, 'success');
       }
       if (res.failCount > 0) {
         toast(`Lưu thất bại ${res.failCount} file.`, 'warning');
       }
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        return; // User cancelled the directory picker, do nothing
-      }
       toast(`Lưu thất bại: ${err instanceof Error ? err.message : String(err)}`, 'error');
     } finally {
       setSaving(false);
