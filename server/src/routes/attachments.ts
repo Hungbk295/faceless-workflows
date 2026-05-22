@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { mkdir, stat, unlink } from 'node:fs/promises';
+import { mkdir, stat, unlink, copyFile } from 'node:fs/promises';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
-import { extname } from 'node:path';
+import { extname, join } from 'node:path';
+import { homedir } from 'node:os';
 import { channelIdSchema } from 'shared';
 import { db, schema } from '../db/client.ts';
 import { attachmentPath, attachmentsDirForChannel } from '../services/filesystem.ts';
@@ -97,3 +98,64 @@ attachmentsRoute.delete('/:id', async (c) => {
     throw err;
   }
 });
+
+attachmentsRoute.post('/save-to-folder', async (c) => {
+  const channelId = parseChannelId(c.req.param('channelId') ?? '');
+  ensureChannelExists(channelId);
+
+  const { targetFolder, items } = (await c.req.json()) as { targetFolder: string; items: any[] };
+  if (!targetFolder || typeof targetFolder !== 'string') {
+    throw new HTTPException(400, { message: 'invalid target folder' });
+  }
+
+  let folderPath = targetFolder.trim();
+  if (folderPath.startsWith('~')) {
+    folderPath = join(homedir(), folderPath.slice(1));
+  }
+
+  try {
+    await mkdir(folderPath, { recursive: true });
+  } catch (err) {
+    throw new HTTPException(500, { message: `Không thể tạo thư mục: ${err instanceof Error ? err.message : String(err)}` });
+  }
+
+  let copiedCount = 0;
+  const errors: string[] = [];
+
+  for (const item of items) {
+    const sourcePath = item.serverPath;
+    if (!sourcePath) {
+      continue;
+    }
+
+    // Determine target filename
+    let filename = item.label || 'image.jpg';
+    if (item.kind === 'frame') {
+      filename = sourcePath.split(/[/\\]/).pop() || `${item.id.replace(/:/g, '_')}.jpg`;
+    } else if (item.kind === 'video') {
+      filename = sourcePath.split(/[/\\]/).pop() || 'thumbnail.jpg';
+    }
+
+    // Ensure safe filename by removing illegal path characters
+    filename = filename.replace(/[/\\]/g, '_');
+
+    const destPath = join(folderPath, filename);
+
+    try {
+      await stat(sourcePath);
+      await copyFile(sourcePath, destPath);
+      copiedCount++;
+    } catch (err) {
+      console.error(`[save-to-folder] Failed to copy ${sourcePath} to ${destPath}:`, err);
+      errors.push(`${filename}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return c.json({
+    success: true,
+    copiedCount,
+    folder: folderPath,
+    errors: errors.length > 0 ? errors : undefined,
+  });
+});
+

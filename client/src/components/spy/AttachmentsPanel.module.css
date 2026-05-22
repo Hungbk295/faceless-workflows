@@ -142,3 +142,127 @@
   color: var(--dark-ink);
 }
 .dropZone input[type="file"] { display: none; }
+
+.saveActionBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--rust);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.saveActionBtn:hover {
+  background: rgba(194, 65, 12, 0.08);
+  border-color: var(--rust);
+}
+:global(body.dark) .saveActionBtn {
+  border-color: var(--dark-line);
+}
+
+.savePanel {
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideDown 0.2s ease;
+}
+:global(body.dark) .savePanel {
+  background: var(--dark-paper-2);
+  border-color: var(--dark-line);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.savePanelTitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.savePanelRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.folderInput {
+  flex: 1;
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.folderInput:focus {
+  border-color: var(--rust);
+}
+:global(body.dark) .folderInput {
+  background: var(--dark-paper);
+  border-color: var(--dark-line);
+  color: var(--dark-ink);
+}
+
+.confirmSaveBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  background: var(--rust);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+.confirmSaveBtn:hover {
+  opacity: 0.9;
+}
+.confirmSaveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelSaveBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cancelSaveBtn:hover {
+  border-color: var(--ink-soft);
+  color: var(--ink);
+}
+:global(body.dark) .cancelSaveBtn {
+  border-color: var(--dark-line);
+  color: var(--ink-soft);
+}
+
+.savePanelHint {
+  font-size: 11px;
+  color: var(--ink-weak);
+}
+

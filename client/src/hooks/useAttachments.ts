@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { deleteAttachment, uploadAttachment } from '../api/attachments.ts';
+import { deleteAttachment, uploadAttachment, saveAttachmentsToFolder } from '../api/attachments.ts';
+
 
 export type AttachmentKind = 'video' | 'frame' | 'file';
 
@@ -98,5 +99,14 @@ export function useAttachments(channelId: string) {
 
   const clear = useCallback(() => setItems([]), []);
 
-  return { items, isAttached, add, remove, toggle, uploadFile, removeFile, clear };
+  const saveToFolder = useCallback(async (targetFolder: string) => {
+    const targetItems = items.filter((it) => it.serverPath);
+    if (targetItems.length === 0) {
+      throw new Error('Chưa có ảnh/file nào được đính kèm để lưu');
+    }
+    return await saveAttachmentsToFolder(channelId, targetFolder, targetItems);
+  }, [channelId, items]);
+
+  return { items, isAttached, add, remove, toggle, uploadFile, removeFile, clear, saveToFolder };
 }
+

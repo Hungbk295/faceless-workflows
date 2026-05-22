@@ -115,6 +115,7 @@ export function StageReference({ channel }: Props) {
           items={attachments.items}
           onRemove={attachments.removeFile}
           onUploadFile={attachments.uploadFile}
+          onSaveToFolder={attachments.saveToFolder}
         />
         <ClaudeRunPanel
           bridge={bridge}
