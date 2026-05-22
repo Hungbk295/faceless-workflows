@@ -7,7 +7,7 @@ interface Props {
   items: AttachmentItem[];
   onRemove: (item: AttachmentItem) => void;
   onUploadFile: (file: File) => Promise<unknown>;
-  onSaveToFolder?: (folder: string) => Promise<{ success: boolean; copiedCount: number; folder: string; errors?: string[] }>;
+  onSaveToFolderNative?: () => Promise<{ successCount: number; failCount: number }>;
 }
 
 const KIND_ICON: Record<AttachmentItem['kind'], string> = {
@@ -16,15 +16,10 @@ const KIND_ICON: Record<AttachmentItem['kind'], string> = {
   file: '📎',
 };
 
-export function AttachmentsPanel({ items, onRemove, onUploadFile, onSaveToFolder }: Props) {
+export function AttachmentsPanel({ items, onRemove, onUploadFile, onSaveToFolderNative }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(0);
-
-  const [showSavePanel, setShowSavePanel] = useState(false);
-  const [targetFolder, setTargetFolder] = useState(() => {
-    return localStorage.getItem('fs:last_target_folder') || '';
-  });
   const [saving, setSaving] = useState(false);
 
   const handleFiles = useCallback(async (files: FileList | File[]) => {
@@ -56,24 +51,20 @@ export function AttachmentsPanel({ items, onRemove, onUploadFile, onSaveToFolder
   };
 
   const handleSaveToFolder = async () => {
-    const trimmed = targetFolder.trim();
-    if (!trimmed) {
-      toast('Cần nhập đường dẫn thư mục', 'error');
-      return;
-    }
-    if (!onSaveToFolder) return;
-
+    if (!onSaveToFolderNative) return;
     setSaving(true);
     try {
-      const res = await onSaveToFolder(trimmed);
-      localStorage.setItem('fs:last_target_folder', trimmed);
-      if (res.success) {
-        toast(`Đã lưu thành công ${res.copiedCount} file vào: ${res.folder}`, 'success');
-        setShowSavePanel(false);
-      } else {
-        toast('Lưu file gặp một số lỗi', 'warning');
+      const res = await onSaveToFolderNative();
+      if (res.successCount > 0) {
+        toast(`Đã lưu thành công ${res.successCount} file vào thư mục bạn chọn.`, 'success');
+      }
+      if (res.failCount > 0) {
+        toast(`Lưu thất bại ${res.failCount} file.`, 'warning');
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return; // User cancelled the directory picker, do nothing
+      }
       toast(`Lưu thất bại: ${err instanceof Error ? err.message : String(err)}`, 'error');
     } finally {
       setSaving(false);
@@ -94,55 +85,20 @@ export function AttachmentsPanel({ items, onRemove, onUploadFile, onSaveToFolder
             {items.length === 0 ? 'chưa có' : `${items.length} mục`}
             {uploading > 0 && ` · đang upload ${uploading}…`}
           </span>
-          {items.length > 0 && onSaveToFolder && (
+          {items.length > 0 && onSaveToFolderNative && (
             <button
               type="button"
               className={styles.saveActionBtn}
-              onClick={() => setShowSavePanel(!showSavePanel)}
-              title="Lưu tất cả ảnh/file vào một thư mục khác trên máy tính"
+              onClick={handleSaveToFolder}
+              disabled={saving}
+              title="Mở thư mục trên máy để lưu tất cả ảnh/file"
             >
-              💾 Lưu vào thư mục khác
+              {saving ? '⏳ Đang lưu…' : '💾 Lưu vào thư mục khác'}
             </button>
           )}
         </div>
       </div>
 
-      {showSavePanel && items.length > 0 && (
-        <div className={styles.savePanel}>
-          <div className={styles.savePanelTitle}>
-            <span>Lưu tất cả attachments vào thư mục trên máy tính</span>
-          </div>
-          <div className={styles.savePanelRow}>
-            <input
-              type="text"
-              className={styles.folderInput}
-              placeholder="Ví dụ: /Users/username/Pictures/Exported"
-              value={targetFolder}
-              onChange={(e) => setTargetFolder(e.target.value)}
-              disabled={saving}
-            />
-            <button
-              type="button"
-              className={styles.confirmSaveBtn}
-              onClick={handleSaveToFolder}
-              disabled={saving || !targetFolder.trim()}
-            >
-              {saving ? 'Đang lưu…' : 'Xác nhận Lưu'}
-            </button>
-            <button
-              type="button"
-              className={styles.cancelSaveBtn}
-              onClick={() => setShowSavePanel(false)}
-              disabled={saving}
-            >
-              Hủy
-            </button>
-          </div>
-          <span className={styles.savePanelHint}>
-            Nhập đường dẫn tuyệt đối hoặc dùng dấu <code>~</code> đại diện cho thư mục Home của bạn.
-          </span>
-        </div>
-      )}
 
 
       {items.length === 0 ? (
