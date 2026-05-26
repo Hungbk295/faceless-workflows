@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { extname, join } from 'node:path';
-import { homedir } from 'node:os';
+import { homedir, platform } from 'node:os';
 import { channelIdSchema } from 'shared';
 import { db, schema } from '../db/client.ts';
 import { attachmentPath, attachmentsDirForChannel } from '../services/filesystem.ts';
@@ -101,11 +101,26 @@ attachmentsRoute.delete('/:id', async (c) => {
 });
 
 function selectFolderDialog(): Promise<string> {
+  const isWin = platform() === 'win32';
   return new Promise((resolve, reject) => {
-    const proc = spawn('osascript', [
-      '-e',
-      'POSIX path of (choose folder with prompt "Chọn thư mục để lưu ảnh:")'
-    ]);
+    let proc;
+    if (isWin) {
+      const psScript = `
+        Add-Type -AssemblyName System.Windows.Forms;
+        $f = New-Object System.Windows.Forms.FolderBrowserDialog;
+        $f.Description = 'Chọn thư mục để lưu ảnh:';
+        $f.ShowNewFolderButton = $true;
+        if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+          $f.SelectedPath
+        }
+      `.trim();
+      proc = spawn('powershell', ['-NoProfile', '-Command', psScript]);
+    } else {
+      proc = spawn('osascript', [
+        '-e',
+        'POSIX path of (choose folder with prompt "Chọn thư mục để lưu ảnh:")'
+      ]);
+    }
     
     let stdout = '';
     let stderr = '';
@@ -121,7 +136,7 @@ function selectFolderDialog(): Promise<string> {
       if (code === 0) {
         resolve(stdout.trim());
       } else {
-        reject(new Error(stderr.trim() || `AppleScript exited with code ${code}`));
+        reject(new Error(stderr.trim() || `Dialog exited with code ${code}`));
       }
     });
   });
@@ -207,8 +222,13 @@ attachmentsRoute.post('/open-folder', async (c) => {
     throw new HTTPException(400, { message: 'invalid folder path' });
   }
 
+  const isWin = platform() === 'win32';
   try {
-    spawn('open', [folder]);
+    if (isWin) {
+      spawn('explorer.exe', [folder]);
+    } else {
+      spawn('open', [folder]);
+    }
     return c.json({ success: true });
   } catch (err) {
     throw new HTTPException(500, { message: `Không thể mở thư mục: ${err instanceof Error ? err.message : String(err)}` });

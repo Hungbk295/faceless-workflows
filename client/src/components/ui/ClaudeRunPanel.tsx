@@ -20,10 +20,16 @@ export function ClaudeRunPanel({ bridge, prompt, promptLabel, disabledReason, on
   const isLoading = bridge.status === 'loading';
   const elapsedSec = Math.floor(bridge.elapsedMs / 1000);
 
-  const handleRun = onRun ?? (() => {
-    if (isLoading) bridge.abort();
-    else void bridge.run(prompt);
-  });
+  const handleRun = (currentPrompt: string) => {
+    if (isLoading) {
+      bridge.abort();
+    } else if (onRun) {
+      onRun();
+    } else {
+      void bridge.run(currentPrompt);
+    }
+  };
+
 
   return (
     <>

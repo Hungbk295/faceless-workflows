@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { serveStatic } from 'hono/bun';
 import { errorMiddleware } from './middleware/error.ts';
 import { healthRoute } from './routes/health.ts';
 import { channelsRoute } from './routes/channels.ts';
@@ -47,4 +48,17 @@ app.route('/api/import', importRoute);
 app.route('/api/export', exportRoute);
 app.route('/api/settings', settingsRoute);
 
+// Serve static client files from './public'
+app.use('/assets/*', serveStatic({ root: './public' }));
+app.use('/favicon.ico', serveStatic({ root: './public' }));
+app.use('/index.html', serveStatic({ root: './public' }));
+
+app.get('*', (c, next) => {
+  if (c.req.path.startsWith('/api')) {
+    return next();
+  }
+  return serveStatic({ path: './public/index.html' })(c, next);
+});
+
 app.notFound((c) => c.json({ error: 'Not Found', path: c.req.path }, 404));
+

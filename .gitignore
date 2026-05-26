@@ -10,3 +10,5 @@ faceless.db
 faceless.db-journal
 faceless.db.bak
 clips/
+build-windows/
+faceless-studio-windows.zip

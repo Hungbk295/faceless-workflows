@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '../../store/toast.ts';
 import styles from './PromptBlock.module.css';
 
 interface PromptBlockProps {
   label: string;
   prompt: string;
-  onRunClaude?: () => void;
+  onRunClaude?: (editedPrompt: string) => void;
   runLabel?: string;
   runDisabled?: boolean;
 }
@@ -18,10 +18,15 @@ export function PromptBlock({
   runDisabled = false,
 }: PromptBlockProps) {
   const [copied, setCopied] = useState(false);
+  const [editedPrompt, setEditedPrompt] = useState(prompt);
+
+  useEffect(() => {
+    setEditedPrompt(prompt);
+  }, [prompt]);
 
   const onCopy = async () => {
     try {
-      await navigator.clipboard.writeText(prompt);
+      await navigator.clipboard.writeText(editedPrompt);
       setCopied(true);
       toast('Copied prompt', 'success');
       setTimeout(() => setCopied(false), 1500);
@@ -46,7 +51,7 @@ export function PromptBlock({
             <button
               type="button"
               className={styles.iconBtn}
-              onClick={onRunClaude}
+              onClick={() => onRunClaude(editedPrompt)}
               disabled={runDisabled}
             >
               ▶ {runLabel}
@@ -54,7 +59,13 @@ export function PromptBlock({
           )}
         </span>
       </div>
-      <pre className={styles.pre}>{prompt}</pre>
+      <textarea
+        className={styles.textarea}
+        value={editedPrompt}
+        onChange={(e) => setEditedPrompt(e.target.value)}
+        placeholder="Edit prompt here..."
+      />
     </div>
   );
 }
+

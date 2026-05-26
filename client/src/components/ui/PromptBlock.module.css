@@ -43,16 +43,24 @@
 .iconBtn:hover { border-color: var(--rust); color: var(--rust); }
 .iconBtn.copied { border-color: var(--olive); color: var(--olive); }
 
-.pre {
+.textarea {
+  width: 100%;
   padding: 14px 18px;
   font-family: var(--font-mono);
   font-size: 12.5px;
   line-height: 1.65;
   white-space: pre-wrap;
   word-wrap: break-word;
-  color: var(--ink-soft);
+  color: var(--ink);
+  min-height: 200px;
   max-height: 480px;
   overflow-y: auto;
+  background: transparent;
+  border: none;
+  resize: vertical;
+  outline: none;
+  display: block;
 }
 
-:global(body.dark) .pre { color: var(--dark-ink-soft); }
+:global(body.dark) .textarea { color: var(--dark-ink); }
+
